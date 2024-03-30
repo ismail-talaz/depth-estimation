@@ -4,7 +4,7 @@ import uuid
 from fastapi import FastAPI, File, UploadFile
 
 from predictor import DepthEstimationModel
-
+from upload import upload_image_to_imgbb
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png"}
 TEMP_FOLDER = "api_images"
 
@@ -12,7 +12,7 @@ os.makedirs(TEMP_FOLDER, exist_ok=True)
 
 
 app = FastAPI()
-depth_estimator = DepthEstimationModel
+depth_estimator = DepthEstimationModel()
 
 
 @app.post("/predict")
@@ -30,7 +30,12 @@ async def predict(file: UploadFile = File(...)):
         with open(destination_path, "wb") as image_data:
             image_data.write(file.file.read())
 
+       
         depth_estimator.calculate_depthmap(destination_path, output_path)
+
+        response = upload_image_to_imgbb(output_path)
+
+        return response
 
     except Exception as e:
         return {"error": str(e)}
